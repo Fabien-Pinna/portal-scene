@@ -3,6 +3,8 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
+import firefliesVertexShader from './shaders/fireflies/vertex.glsl'
+import firefliesFragmentShader from './shaders/fireflies/fragment.glsl'
 
 /**
  * Base
@@ -94,6 +96,9 @@ window.addEventListener('resize', () => {
     // Update renderer
     renderer.setSize(sizes.width, sizes.height)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+
+    // Update pixelRatio
+    firefliesMaterial.uniforms.uPixelRatio.value = Math.min(window.devicePixelRatio, 2)
 })
 
 /**
@@ -102,20 +107,35 @@ window.addEventListener('resize', () => {
 const firefliesGeometry = new THREE.BufferGeometry()
 const firefliesCount = 30
 const positionArray = new Float32Array(firefliesCount * 3)
+const scaleArray = new Float32Array(firefliesCount)
 
 for (let i = 0; i < firefliesCount; i++) {
     positionArray[i * 3 + 0] = (Math.random() - 0.5) * 4
     positionArray[i * 3 + 1] = Math.random() * 1.5
     positionArray[i * 3 + 2] = (Math.random() - 0.5) * 4
+
+    scaleArray[i] = Math.random()
 }
 firefliesGeometry.setAttribute('position', new THREE.BufferAttribute(positionArray, 3))
+firefliesGeometry.setAttribute('aScale', new THREE.BufferAttribute(scaleArray, 1))
 
 // Material
-const firefliesMaterial = new THREE.PointsMaterial({
-    size: 0.1,
-    sizeAttenuation: true,
+const firefliesMaterial = new THREE.ShaderMaterial({
+    uniforms:
+    {
+        uTime: { value: 0 },
+        uPixelRatio: { value: Math.min(window.devicePixelRatio, 2) },
+        uSize: { value: 100 },
+    },
+    vertexShader: firefliesVertexShader,
+    fragmentShader: firefliesFragmentShader,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
 
 })
+
+gui.add(firefliesMaterial.uniforms.uSize, 'value').min(0).max(500).step(1).name('firefliesSize')
 
 // Points
 const fireflies = new THREE.Points(firefliesGeometry, firefliesMaterial)
@@ -159,6 +179,9 @@ const clock = new THREE.Clock()
 
 const tick = () => {
     const elapsedTime = clock.getElapsedTime()
+
+    // Update fireflies
+    firefliesMaterial.uniforms.uTime.value = elapsedTime
 
     // Update controls
     controls.update()
