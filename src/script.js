@@ -8,6 +8,7 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
  * Base
  */
 // Debug
+const debugObject = {}
 const gui = new dat.GUI({
     width: 400
 })
@@ -96,6 +97,31 @@ window.addEventListener('resize', () => {
 })
 
 /**
+ * Fireflies
+ */
+const firefliesGeometry = new THREE.BufferGeometry()
+const firefliesCount = 30
+const positionArray = new Float32Array(firefliesCount * 3)
+
+for (let i = 0; i < firefliesCount; i++) {
+    positionArray[i * 3 + 0] = (Math.random() - 0.5) * 4
+    positionArray[i * 3 + 1] = Math.random() * 1.5
+    positionArray[i * 3 + 2] = (Math.random() - 0.5) * 4
+}
+firefliesGeometry.setAttribute('position', new THREE.BufferAttribute(positionArray, 3))
+
+// Material
+const firefliesMaterial = new THREE.PointsMaterial({
+    size: 0.1,
+    sizeAttenuation: true,
+
+})
+
+// Points
+const fireflies = new THREE.Points(firefliesGeometry, firefliesMaterial)
+scene.add(fireflies)
+
+/**
  * Camera
  */
 // Base camera
@@ -119,6 +145,12 @@ const renderer = new THREE.WebGLRenderer({
 })
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+
+debugObject.clearColor = '#12071c'
+renderer.setClearColor(debugObject.clearColor)
+gui.addColor(debugObject, 'clearColor').onChange(() => {
+    renderer.setClearColor(debugObject.clearColor)
+})
 
 /**
  * Animate
